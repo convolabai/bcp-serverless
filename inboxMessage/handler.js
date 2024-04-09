@@ -1,12 +1,17 @@
 'use strict';
 const axios = require('axios')
 
-let username = process.env.USERNAME
-let password = process.env.PASSWORD
-let clientId = process.env.CLIENTID
-const cloud = process.env.CLOUDURL
+// let username = process.env.USERNAME
+// let password = process.env.PASSWORD
+// let clientId = process.env.CLIENTID
+// const cloud = process.env.CLOUDURL
 
-module.exports.greetingMessage = async (event) => {
+let username = "bangchakcc-dev@amitysolutions.com"
+let password = "1qazZAQ!"
+let clientId = "1cgb3gg81l348m66f06251nv7d"
+const cloud = "amitysolutions.com"
+
+module.exports.inboxMessage = async (event) => {
   console.log("event: ", event);
   const rawData = event.body;
 
@@ -30,7 +35,7 @@ module.exports.greetingMessage = async (event) => {
         channelId: jsonRawData.message.attributes.channelId,
         userId: requestData.source.userId,
         action: {
-          action: 'addMember_event' // template name
+          action: 'greeting_template' // template name
         }
       },
       headers: {
@@ -61,7 +66,7 @@ module.exports.greetingMessage = async (event) => {
           channelId: jsonRawData.message.attributes.channelId,
           userId: requestData.source.userId,
           action: {
-            action: 'general_fail' // template name
+            action: 'fail_template' // template name
             // action: '@8fD78yTr4K99D77z9MGe/fail_flow' // template name
           }
         },

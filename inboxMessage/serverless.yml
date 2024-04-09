@@ -1,4 +1,4 @@
-service: bcp-serverless
+service: bcp-serverless-event
 useDotenv: true
 
 frameworkVersion: "3"
@@ -12,15 +12,12 @@ provider:
     cors: true
 
 functions:
-  templateHook:
-    handler: handler.templateHook
-    environment:
-      url_enpoint: ${env:url_enpoint}
-      token: ${env:token}
+  inboxMessage:
+    handler: handler.inboxMessage
     events:
       - httpApi:
           method: POST
-          path: /api/custom_template
+          path: /api/inbox_custom
 
 plugins:
   - serverless-prune-plugin
