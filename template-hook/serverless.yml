@@ -1,0 +1,26 @@
+service: bcp-serverless
+useDotenv: true
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: dev
+  region: ap-southeast-1
+  httpApi:
+    cors: true
+
+functions:
+  templateHook:
+    handler: handler.templateHook
+    environment:
+      url_enpoint: ${env:url_enpoint}
+      token: ${env:token}
+    events:
+      - httpApi:
+          method: POST
+          path: /api/custom_template
+
+plugins:
+  - serverless-prune-plugin

@@ -1,1 +1,1 @@
-# bcp-serverless
+# bcp-lambda
