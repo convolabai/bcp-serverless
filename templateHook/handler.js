@@ -16,6 +16,7 @@ module.exports.templateHook = async (event) => {
   const rawBody = event.body
   const jsonBody = JSON.parse(rawBody);
   console.log("jsonBody :", JSON.stringify(jsonBody));
+  let metadata = JSON.stringify(jsonBody.action.metadata?.data);
   const rawOutgoingMessage = jsonBody.outgoingMessage
 
   if (jsonBody.action.action === "oil_price_webchat") {
@@ -65,6 +66,42 @@ module.exports.templateHook = async (event) => {
       }
     } catch (error) {
       console.log("Template ERROR : oil_price_webchat with ", error)
+    }
+  }
+  else if (jsonBody.action.action === "gpt_answer_template") {
+    console.log("match gpt_answer_template")
+    try {
+
+      console.log("rawOutgoingMessage :", JSON.stringify(rawOutgoingMessage));
+      console.log("metadata :",metadata);
+      let gpt_answer_template = rawOutgoingMessage;
+      let gpt_answer_template_message = gpt_answer_template.messages;
+
+      console.log("gpt_answer_template_message :", JSON.stringify(gpt_answer_template_message));
+
+      // gpt_answer_template_message.text = JSON.stringify(metadata)
+      // console.log("oli_price_template_message.contents :", JSON.stringify(oli_price_template_message[0].contents));
+      // console.log("oli_price_template_message[0].contents.body.contents.length :", oli_price_template_message[0].contents.body.contents.length);
+
+      gpt_answer_template.messages[0].text = metadata.slice(1,metadata.length-1);
+
+      console.log("gpt_answer_template :", JSON.stringify(gpt_answer_template));
+      // console.log("gpt_answer_template_message :", JSON.stringify(gpt_answer_template_message));
+
+
+      ////////////////////////////
+      const sendTemplate = {
+        "outgoingMessage": gpt_answer_template,
+        "shouldContextualize": true
+      }
+      console.log("sendTemplate: ", JSON.stringify(sendTemplate))
+  
+      return {
+        statusCode: 200,
+        body: JSON.stringify(sendTemplate)
+      }
+    } catch (error) {
+      console.log("Template ERROR : gpt_answer_template with ", error)
     }
   }
   else {
