@@ -12,20 +12,12 @@ provider:
     cors: true
 
 functions:
-  inboxMessage:
-    handler: handler.inboxMessage
+  outboxMessage:
+    handler: handler.botMessage
     events:
       - httpApi:
           method: POST
-          path: /api/inbox_custom
-
-  outMessage:
-    handler: outbox-handler.outboxMessage
-    events:
-      - httpApi:
-          method: POST
-          path: /api/outbox_custom
-
+          path: /api/bot_custom
 
 plugins:
   - serverless-prune-plugin
