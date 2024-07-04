@@ -67,8 +67,7 @@ module.exports.templateHook = async (event) => {
     } catch (error) {
       console.log("Template ERROR : oil_price_webchat with ", error)
     }
-  }
-  else if (jsonBody.action.action === "gpt_answer_template") {
+  }else if (jsonBody.action.action === "gpt_answer_template") {
     console.log("match gpt_answer_template")
     try {
 
@@ -103,6 +102,38 @@ module.exports.templateHook = async (event) => {
     } catch (error) {
       console.log("Template ERROR : gpt_answer_template with ", error)
     }
+  }else if(jsonBody.action.action === "agent_message"){
+    console.log("match agent_message")
+    try {
+
+      console.log("rawOutgoingMessage :", JSON.stringify(rawOutgoingMessage));
+      console.log("metadata :",JSON.stringify(metadata));
+      let agent_message_template = rawOutgoingMessage;
+      let agent_message_template_message = agent_message_template.messages;
+
+      console.log("agent_message_template_message :", JSON.stringify(agent_message_template_message));
+
+
+      agent_message_template.messages[0].text = jsonBody.action.metadata?.custom_text
+
+      console.log("agent_message_template :", JSON.stringify(agent_message_template));
+
+      ////////////////////////////
+      const sendTemplate = {
+        "outgoingMessage": agent_message_template,
+        "shouldContextualize": true
+      }
+      console.log("sendTemplate: ", JSON.stringify(sendTemplate))
+  
+      return {
+        statusCode: 200,
+        body: JSON.stringify(sendTemplate)
+      }
+    } catch (error) {
+      console.log("Template ERROR : agent_message_template with ", error)
+    }
+
+
   }
   else {
     const sendTemplate = {

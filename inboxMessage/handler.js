@@ -25,17 +25,17 @@ module.exports.inboxMessage = async (event) => {
   console.log("inbox event: ", JSON.stringify(requestData));
 
   let isCheckMessage = requestData?.message ? requestData.message : false
-  if (requestData.type == "follow") {
+  if (requestData?.type === "follow" || requestData?.payload === "") {
     let credential = await access_credential()
-
+    let uid = requestData?.source?.userId ? requestData.source?.userId : requestData.userId
     const config = {
       method: 'post',
       url: `https://chatbot.${cloud}/api/v1/messages/action`,
       data: {
-        channelId: jsonRawData.message.attributes.channelId,
-        userId: requestData.source.userId,
+        channelId: jsonRawData?.message?.attributes?.channelId ? jsonRawData?.message?.attributes?.channelId : requestData.channelId,
+        userId: uid,
         action: {
-          action: 'greeting_template' // template name
+          action: `@${credential.flowEngine[ 1 ].flowEngineId}/${uid.startsWith('U') ? "get_start_line" : "get_start_webchat"}` // template name
         }
       },
       headers: {
@@ -54,7 +54,7 @@ module.exports.inboxMessage = async (event) => {
     }
   } else if (isCheckMessage) {
 
-    if (requestData.message.type != "text") {
+    if (requestData.message.type !== "text") {
       let credential = await access_credential()
 
       const config = {
@@ -64,8 +64,7 @@ module.exports.inboxMessage = async (event) => {
           channelId: jsonRawData.message.attributes.channelId,
           userId: requestData.source.userId,
           action: {
-            action: 'fail_template' // template name
-            // action: '@8fD78yTr4K99D77z9MGe/fail_flow' // template name
+            action: `@${credential.flowEngine[ 1 ].flowEngineId}/fail_template`
           }
         },
         headers: {
@@ -82,75 +81,78 @@ module.exports.inboxMessage = async (event) => {
       } catch (error) {
         console.log("Image message Fail !!!")
       }
+
+
     }
 
 
-  }
+    let userId = jsonRawData.message?.attributes?.channelId === "2004036487" ? requestData?.source?.userId : requestData?.userId
 
-  let userId = jsonRawData.message?.attributes?.channelId === "2004036487" ? requestData?.source?.userId : requestData?.userId
+    const currentDate = new Date();
+    const timestampInSeconds = Math.floor(currentDate.getTime() / 1000);
+    const isoString = currentDate.toISOString();
+    console.log(timestampInSeconds)
+    console.log(isoString)
 
-  const currentDate = new Date();
-  const timestampInSeconds = Math.floor(currentDate.getTime() / 1000);
-  const isoString = currentDate.toISOString();
-  console.log(timestampInSeconds)
-  console.log(isoString)
+    let bodyConfig = {}
+    if (jsonRawData.message?.attributes?.channelId === "2004036487") {
+      const info = await userInfo(userId)
+      console.log('user info : ', info)
 
-  let bodyConfig = {}
-  if (jsonRawData.message?.attributes?.channelId === "2004036487") {
-    const info = await userInfo(userId)
-    console.log('user info : ', info)
+      bodyConfig = {
+        "contents": [ {
+          "type": "TEXT",
+          "message": requestData?.message?.text
+        } ],
+        "channelType": "LINE",
+        "senderType": "USER",
+        "CreatedAt": timestampInSeconds,
+        "CreateDateTime": isoString,
+        "ChannelId": "123456789",
+        "users": [
+          {
+            "displayName": info.displayName,
+            "imageUrl": info.imageUrl,
+            "status": "Active",
+            "userId": userId
+          } ]
+      }
+      console.log(new Date())
+    } else {
+      console.log('webChat')
+      const info = await userInfo(userId)
+      console.log('user info : ', info)
 
-    bodyConfig = {
-      "contents": [ {
-        "type": "TEXT",
-        "message": requestData.message.text
-      } ],
-      "channelType": "LINE",
-      "senderType": "USER",
-      "CreatedAt": timestampInSeconds,
-      "CreateDateTime": isoString,
-      "ChannelId": "123456789",
-      "users": [
-        {
-          "displayName": info.displayName,
-          "imageUrl": info.imageUrl,
-          "status": "Active",
-          "userId": userId
-        } ]
+      bodyConfig = {
+        "contents": [ {
+          "type": "TEXT",
+          "message": requestData.payload
+        } ],
+        "channelType": "WEBCHAT",
+        "senderType": "USER",
+        "CreatedAt": timestampInSeconds,
+        "CreateDateTime": isoString,
+        "ChannelId": "123456789",
+        "users": [
+          {
+            "displayName": "",
+            "imageUrl": "",
+            "status": "Active",
+            "userId": userId
+          } ]
+      }
     }
-    console.log(new Date())
-  } else {
-    console.log('webChat')
-    const info = await userInfo(userId)
-    console.log('user info : ', info)
 
-    bodyConfig = {
-      "contents": [ {
-        "type": "TEXT",
-        "message": requestData.payload
-      } ],
-      "channelType": "WEBCHAT",
-      "senderType": "USER",
-      "CreatedAt": timestampInSeconds,
-      "CreateDateTime": isoString,
-      "ChannelId": "123456789",
-      "users": [
-        {
-          "displayName": "",
-          "imageUrl": "",
-          "status": "Active",
-          "userId": userId
-        } ]
+
+    try {
+      const token_sf = await getSFToken()
+      await sendHistory(token_sf, bodyConfig)
+    } catch (error) {
+      console.log("Error status: ", error)
     }
   }
 
 
-  try {
-    const token_sf = await getSFToken()
-    await sendHistory(token_sf, bodyConfig)
-  } catch (error) {
-    console.log("Error status: ", error)
-  }
 
 
   return {
