@@ -1,16 +1,20 @@
 'use strict';
 const axios = require('axios')
 
-let username = "bangchakcc-dev@amitysolutions.com"
-let password = "1qazZAQ!"
-let clientId = "1cgb3gg81l348m66f06251nv7d"
+const username = "bangchakcc-dev@amitysolutions.com"
+const password = "1qazZAQ!"
+const clientId = "1cgb3gg81l348m66f06251nv7d"
 const cloud = "amitysolutions.com"
+const cognito = 'https://cognito-idp.ap-southeast-1.amazonaws.com/'
+const sfDomain = 'https://bangchakcorporation2--partial.sandbox.my.salesforce.com'
+const sfClientId = '3MVG9Po2PmyYruukeqcsVqYm7PEKuBTwUxAlq_USHWT_uHQDkA3RqcdAQv.zKwyaJREe8tkl93TOwcvOXWkmc'
+const sfClientSecret = '844D0505D984934725CE1DD4281069C08236B2DB979D8D2CB6AFBEFA1108337E'
+const sfUserName = 'crmadmin1@bangchak.co.th.partial'
+const sfPassword = 'crm@dmin2021uinCClvzcNK1R4xdzOeCUJ3L'
+const sfChannelId = '123456789'
 
 module.exports.outboxMessage = async (event) => {
-  console.log("event: ", event);
   const rawData = event.body;
-  console.log(rawData)
-
   const jsonRawData = JSON.parse(rawData);
   console.log('jsonRawData : ', jsonRawData)
   //decode part
@@ -24,7 +28,7 @@ module.exports.outboxMessage = async (event) => {
       if (item.type === 'image') {
         return {
           type: 'IMG',
-          url: item.originalContentUrl
+          message: item.originalContentUrl
         };
       } else if (item.type === 'text') {
         return {
@@ -45,9 +49,6 @@ module.exports.outboxMessage = async (event) => {
   const currentDate = new Date();
   const timestampInSeconds = Math.floor(currentDate.getTime() / 1000);
   const isoString = currentDate.toISOString();
-  console.log(timestampInSeconds)
-  console.log(isoString)
-
 
   let bodyConfig = {}
   if (requestData.type === "LINE") {
@@ -60,7 +61,7 @@ module.exports.outboxMessage = async (event) => {
       "senderType": "BOT",
       "CreatedAt": timestampInSeconds,
       "CreateDateTime": isoString,
-      "ChannelId": "123456789",
+      "ChannelId": sfChannelId,
       "users": [
         {
           "displayName": info.displayName,
@@ -81,7 +82,7 @@ module.exports.outboxMessage = async (event) => {
       "senderType": "BOT",
       "CreatedAt": timestampInSeconds,
       "CreateDateTime": isoString,
-      "ChannelId": "123456789",
+      "ChannelId": sfChannelId,
       "users": [
         {
           "displayName": "",
@@ -93,8 +94,6 @@ module.exports.outboxMessage = async (event) => {
   }
 
   try {
-    console.log('bodyConfig users: ', bodyConfig.users)
-    console.log('bodyConfig c  : ', bodyConfig.contents)
     const token_sf = await getSFToken()
     await sendHistory(token_sf, bodyConfig)
   } catch (error) {
@@ -118,7 +117,7 @@ async function getToken() {
 
   let config = {
     method: 'post',
-    url: 'https://cognito-idp.ap-southeast-1.amazonaws.com/',
+    url: `${cognito}`,
     headers: {
       'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
       'Content-Type': 'application/x-amz-json-1.1'
@@ -135,61 +134,61 @@ async function getToken() {
   }
 }
 
-async function getNetworkId() {
-  let tokenId = await getToken();
-  let config = {
-    method: 'get',
-    url: `https://cim.${cloud}/api/v1/channels`,
-    headers: {
-      'Authorization': `Bearer ${tokenId}`
-    }
-  }
+// async function getNetworkId() {
+//   let tokenId = await getToken();
+//   let config = {
+//     method: 'get',
+//     url: `https://cim.${cloud}/api/v1/channels`,
+//     headers: {
+//       'Authorization': `Bearer ${tokenId}`
+//     }
+//   }
 
-  try {
-    let res = await axios.request(config);
-    let networkId = res.data[ 0 ].networkId
-    return {
-      tokenId,
-      networkId
-    }
-  } catch (error) {
-    console.log("Error status: ", error.statusCode)
-  }
-}
+//   try {
+//     let res = await axios.request(config);
+//     let networkId = res.data[ 0 ].networkId
+//     return {
+//       tokenId,
+//       networkId
+//     }
+//   } catch (error) {
+//     console.log("Error status: ", error.statusCode)
+//   }
+// }
 
-async function access_credential() {
-  let access_credential = await getNetworkId();
+// async function access_credential() {
+//   let access_credential = await getNetworkId();
 
-  let tokenId = access_credential.tokenId;
-  let networkId = access_credential.networkId;
-  let config = {
-    method: 'get',
-    url: `https://cim.${cloud}/api/v1/networks/${networkId}`,
-    headers: {
-      'Authorization': `Bearer ${tokenId}`
-    }
-  }
-  try {
-    let res = await axios.request(config);
-    let apiKey = res.data.apiKey;
-    let flowEngine = res.data.config.flowEngines
-    return {
-      tokenId,
-      networkId,
-      apiKey,
-      flowEngine,
-    }
+//   let tokenId = access_credential.tokenId;
+//   let networkId = access_credential.networkId;
+//   let config = {
+//     method: 'get',
+//     url: `https://cim.${cloud}/api/v1/networks/${networkId}`,
+//     headers: {
+//       'Authorization': `Bearer ${tokenId}`
+//     }
+//   }
+//   try {
+//     let res = await axios.request(config);
+//     let apiKey = res.data.apiKey;
+//     let flowEngine = res.data.config.flowEngines
+//     return {
+//       tokenId,
+//       networkId,
+//       apiKey,
+//       flowEngine,
+//     }
 
-  } catch (error) {
-    console.log("Error status: ", error.statusCode)
-  }
-}
+//   } catch (error) {
+//     console.log("Error status: ", error.statusCode)
+//   }
+// }
 
 async function userInfo(userId) {
   let tokenId = await getToken();
   let config = {
     method: 'GET',
-    url: `https://campaign.amitysolutions.com/api/v1/audience?keyword=${userId}`,
+    url: `https://campaign.${cloud}/api/v1/audience?keyword=${userId}`,
     headers: {
       'Authorization': `Bearer ${tokenId}`
     }
@@ -207,7 +206,7 @@ async function userInfo(userId) {
 async function getSFToken() {
   let config = {
     method: 'POST',
-    url: `https://bangchakcorporation2--partial.sandbox.my.salesforce.com/services/oauth2/token?grant_type=password&client_id=3MVG9Po2PmyYruukeqcsVqYm7PEKuBTwUxAlq_USHWT_uHQDkA3RqcdAQv.zKwyaJREe8tkl93TOwcvOXWkmc&client_secret=844D0505D984934725CE1DD4281069C08236B2DB979D8D2CB6AFBEFA1108337E&username=crmadmin1@bangchak.co.th.partial&password=crm@dmin2021uinCClvzcNK1R4xdzOeCUJ3L`,
+    url: `${sfDomain}/services/oauth2/token?grant_type=password&client_id=${sfClientId}&client_secret=${sfClientSecret}&username=${sfUserName}&password=${sfPassword}`,
 
   }
 
@@ -225,7 +224,7 @@ async function sendHistory(token_sf, bodyConfig) {
 
   let config = {
     method: 'post',
-    url: 'https://bangchakcorporation2--partial.sandbox.my.salesforce.com/services/apexrest/api/ChatMessagingService/message/send',
+    url: `${sfDomain}/services/apexrest/api/ChatMessagingService/message/send`,
     headers: {
       'Authorization': token_sf,
       'Content-Type': 'application/json'
