@@ -10,7 +10,25 @@ provider:
   region: ap-southeast-1
   httpApi:
     cors: true
-
+  environment:
+    test_na: ${env.test_na}
+    username : "bangchakcc-dev@amitysolutions.com"
+    password : "1qazZAQ!"
+    clientId : "1cgb3gg81l348m66f06251nv7d"
+    cloud : "amitysolutions.com"
+    cognito : "https://cognito-idp.ap-southeast-1.amazonaws.com/"
+    sfDomain : "https://bangchakcorporation2--partial.sandbox.my.salesforce.com"
+    sfClientId : "3MVG9Po2PmyYruukeqcsVqYm7PEKuBTwUxAlq_USHWT_uHQDkA3RqcdAQv.zKwyaJREe8tkl93TOwcvOXWkmc"
+    sfClientSecret : "844D0505D984934725CE1DD4281069C08236B2DB979D8D2CB6AFBEFA1108337E"
+    sfUserName : "crmadmin1@bangchak.co.th.partial"
+    sfPassword : "crm@dmin2021uinCClvzcNK1R4xdzOeCUJ3L"
+    sfChannelId : "123456789"
+    line_token : "7lMwHQOUUj5A5OSnRSRfxGs5ERkBixZA6XXbFF7rmLeuSyquojlgkF+dJoIyYZxsj6G8jXTUo7KP61CHa0g4mzx2CZXxp0yXtiDRBdILMXBs8EGjMysKeRZw9QTzx9uNI5bpMQupEYlpf+7Q1+8ucwdB04t89/1O/w1cDnyilFU="
+    line_domain : "https://api-data.line.me/v2/bot/message"
+    s3Bucket : "deposit-files"
+    aws_key: ${env.aws_key}
+    aws_secret: ${env.aws_secret}
+    
 functions:
   inboxMessage:
     handler: handler.inboxMessage
@@ -19,6 +37,7 @@ functions:
           method: POST
           path: /api/inbox_custom
 
+
   outMessage:
     handler: outbox-handler.outboxMessage
     events:
@@ -26,6 +45,6 @@ functions:
           method: POST
           path: /api/outbox_custom
 
-
 plugins:
   - serverless-prune-plugin
+  - serverless-dotenv-plugin

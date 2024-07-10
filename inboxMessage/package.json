@@ -1,6 +1,10 @@
 {
   "dependencies": {
+    "aws-sdk": "^2.1657.0",
+    "dotenv": "^16.4.5",
+    "file-type": "^19.1.0",
     "serverless": "^4.1.7",
+    "serverless-dotenv-plugin": "^1.1.5",
     "serverless-prune-plugin": "^2.0.2"
   }
 }

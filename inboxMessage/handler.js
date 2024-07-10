@@ -1,5 +1,7 @@
 'use strict';
-const axios = require('axios')
+require('dotenv').config();
+const AWS = require('aws-sdk');
+const axios = require('axios');
 
 const username = process.env.username
 const password = process.env.password
@@ -17,9 +19,7 @@ const line_domain = process.env.line_domain
 const s3Bucket = process.env.s3Bucket
 const aws_key = process.env.aws_key
 const aws_secret = process.env.aws_secret
-
-
-
+const test = process.env.test_na
 let fileType;
 
 AWS.config.update({
@@ -28,9 +28,9 @@ AWS.config.update({
   region: 'ap-southeast-1',
 });
 
-
-
 module.exports.inboxMessage = async (event) => {
+  console.log(process.env)
+  console.log(test)
   console.log("event: ", event);
   const rawData = event.body;
   // console.log(rawData)
@@ -80,7 +80,7 @@ module.exports.inboxMessage = async (event) => {
           method: 'GET',
           url: `${line_domain}/${requestData?.message?.id}/content`,
           headers: {
-            'Authorization': line_token,
+            'Authorization': `Bearer ${line_token}`,
           },
           responseType: 'arraybuffer', // Ensure the response is returned as a binary buffer
         };
@@ -121,7 +121,6 @@ module.exports.inboxMessage = async (event) => {
 
 
       let credential = await access_credential()
-
       const config = {
         method: 'post',
         url: `https://chatbot.${cloud}/api/v1/messages/action`,
@@ -171,7 +170,7 @@ module.exports.inboxMessage = async (event) => {
         "senderType": "USER",
         "CreatedAt": timestampInSeconds,
         "CreateDateTime": isoString,
-        "ChannelId": "123456789",
+        "ChannelId": sfChannelId,
         "users": [
           {
             "displayName": info.displayName,
@@ -195,7 +194,7 @@ module.exports.inboxMessage = async (event) => {
         "senderType": "USER",
         "CreatedAt": timestampInSeconds,
         "CreateDateTime": isoString,
-        "ChannelId": "123456789",
+        "ChannelId": sfChannelId,
         "users": [
           {
             "displayName": "",
@@ -235,7 +234,7 @@ async function getToken() {
 
   let config = {
     method: 'post',
-    url: `${cognito}`,
+    url: cognito,
     headers: {
       'X-Amz-Target': 'AWSCognitoIdentityProviderService.InitiateAuth',
       'Content-Type': 'application/x-amz-json-1.1'
@@ -254,6 +253,7 @@ async function getToken() {
 
 async function getNetworkId() {
   let tokenId = await getToken();
+  console.log('tokenId : ',tokenId)
   let config = {
     method: 'get',
     url: `https://cim.${cloud}/api/v1/channels`,
