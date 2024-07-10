@@ -1,20 +1,40 @@
 'use strict';
 const axios = require('axios')
 
-const username = "bangchakcc-dev@amitysolutions.com"
-const password = "1qazZAQ!"
-const clientId = "1cgb3gg81l348m66f06251nv7d"
-const cloud = "amitysolutions.com"
-const cognito = 'https://cognito-idp.ap-southeast-1.amazonaws.com/'
-const sfDomain = 'https://bangchakcorporation2--partial.sandbox.my.salesforce.com'
-const sfClientId = '3MVG9Po2PmyYruukeqcsVqYm7PEKuBTwUxAlq_USHWT_uHQDkA3RqcdAQv.zKwyaJREe8tkl93TOwcvOXWkmc'
-const sfClientSecret = '844D0505D984934725CE1DD4281069C08236B2DB979D8D2CB6AFBEFA1108337E'
-const sfUserName = 'crmadmin1@bangchak.co.th.partial'
-const sfPassword = 'crm@dmin2021uinCClvzcNK1R4xdzOeCUJ3L'
-const sfChannelId = '123456789'
+const username = process.env.username
+const password = process.env.password
+const clientId = process.env.clientId
+const cloud = process.env.cloud
+const cognito = process.env.cognito
+const sfDomain = process.env.sfDomain
+const sfClientId = process.env.sfClientId
+const sfClientSecret = process.env.sfClientSecret
+const sfUserName = process.env.sfUserName
+const sfPassword = process.env.sfPassword
+const sfChannelId = process.env.sfChannelId
+const line_token = process.env.line_token
+const line_domain = process.env.line_domain
+const s3Bucket = process.env.s3Bucket
+const aws_key = process.env.aws_key
+const aws_secret = process.env.aws_secret
+
+
+
+let fileType;
+
+AWS.config.update({
+  accessKeyId: aws_key,
+  secretAccessKey: aws_secret,
+  region: 'ap-southeast-1',
+});
+
+
 
 module.exports.inboxMessage = async (event) => {
+  console.log("event: ", event);
   const rawData = event.body;
+  // console.log(rawData)
+
   const jsonRawData = JSON.parse(rawData);
   console.log('jsonRawData : ', jsonRawData)
   //decode part
@@ -52,8 +72,54 @@ module.exports.inboxMessage = async (event) => {
       console.log("Cant send greeting message!!!")
     }
   } else if (isCheckMessage) {
-
+    let img_url = ''
     if (requestData.message.type !== "text") {
+
+      if (requestData.message.type !== 'sticker') {
+        const configUpload = {
+          method: 'GET',
+          url: `${line_domain}/${requestData?.message?.id}/content`,
+          headers: {
+            'Authorization': line_token,
+          },
+          responseType: 'arraybuffer', // Ensure the response is returned as a binary buffer
+        };
+
+        try {
+          const response = await axios.request(configUpload);
+          console.log('Image message fetched successfully!');
+
+          // Dynamically import fileType
+          if (!fileType) {
+            const module = await import('file-type');
+            fileType = module.default || module; // Handle ES Module default export
+          }
+
+          // Get the file type using the imported function
+          const file_type = await fileType.fromBuffer(response.data);
+
+          // Generate a file name
+          const fileName = `image_${Date.now()}.${file_type.ext}`;
+
+          // Upload to S3
+          const uploadResult = await uploadToS3(response.data, fileName, file_type.mime);
+
+          if (uploadResult) {
+            console.log('Image uploaded to S3 successfully!', uploadResult.file_url);
+            // return uploadResult.file_url;
+
+            img_url = uploadResult.file_url
+          } else {
+            console.error('Image upload to S3 failed!');
+          }
+
+        } catch (error) {
+          console.error('Image message fetch failed!', error);
+        }
+
+      }
+
+
       let credential = await access_credential()
 
       const config = {
@@ -81,30 +147,31 @@ module.exports.inboxMessage = async (event) => {
         console.log("Image message Fail !!!")
       }
 
-
     }
+
 
     let userId = jsonRawData.message?.attributes?.channelId === "2004036487" ? requestData?.source?.userId : requestData?.userId
 
     const currentDate = new Date();
     const timestampInSeconds = Math.floor(currentDate.getTime() / 1000);
     const isoString = currentDate.toISOString();
+    console.log(timestampInSeconds)
+    console.log(isoString)
 
     let bodyConfig = {}
     if (jsonRawData.message?.attributes?.channelId === "2004036487") {
       const info = await userInfo(userId)
       console.log('user info : ', info)
-
       bodyConfig = {
         "contents": [ {
-          "type": "TEXT",
-          "message": requestData?.message?.text
+          "type": requestData.message.type === 'text' ? "TEXT" : requestData.message.type === 'image' ? "IMG": requestData.message.type === 'video' ? "VIDEO" : "STICKER",
+          "message": requestData?.message?.text ? requestData.message.text : img_url !== '' ? img_url : `https://stickershop.line-scdn.net/stickershop/v1/sticker/${requestData.message.stickerId}/android/sticker.png`
         } ],
         "channelType": "LINE",
         "senderType": "USER",
         "CreatedAt": timestampInSeconds,
         "CreateDateTime": isoString,
-        "ChannelId": sfChannelId,
+        "ChannelId": "123456789",
         "users": [
           {
             "displayName": info.displayName,
@@ -113,7 +180,7 @@ module.exports.inboxMessage = async (event) => {
             "userId": userId
           } ]
       }
-      
+      console.log(new Date())
     } else {
       console.log('webChat')
       const info = await userInfo(userId)
@@ -128,7 +195,7 @@ module.exports.inboxMessage = async (event) => {
         "senderType": "USER",
         "CreatedAt": timestampInSeconds,
         "CreateDateTime": isoString,
-        "ChannelId": sfChannelId,
+        "ChannelId": "123456789",
         "users": [
           {
             "displayName": "",
@@ -147,6 +214,9 @@ module.exports.inboxMessage = async (event) => {
       console.log("Error status: ", error)
     }
   }
+
+
+
 
   return {
     statusCode: 200,
@@ -288,3 +358,28 @@ async function sendHistory(token_sf, bodyConfig) {
     console.log("Error status: ", error)
   }
 }
+
+const uploadToS3 = async (fileBody, fileName, contentType) => {
+  try {
+    const s3key = `${process.env.S3_FOLDER_NAME ? process.env.S3_FOLDER_NAME + '/' : ''}${fileName}`;
+
+    const s3Option = {
+      Bucket: s3Bucket,
+      Key: s3key,
+      Body: Buffer.from(fileBody),
+      ContentType: contentType,
+      ACL: 'public-read',
+    };
+
+    const s3 = new AWS.S3();
+    const s3result = await s3.upload(s3Option).promise();
+    return {
+      // file_url: encodeURI(`https://${s3Option.Bucket}/${s3key}`),
+      file_url: encodeURI(`https://${s3Option.Bucket}.s3.ap-southeast-1.amazonaws.com/${s3key}`),
+      file_name: fileName,
+    };
+  } catch (err) {
+    console.error('uploadToS3 Error: ', err);
+    return false;
+  }
+};

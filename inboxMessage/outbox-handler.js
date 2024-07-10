@@ -1,17 +1,18 @@
 'use strict';
 const axios = require('axios')
+require('dotenv').config();
 
-const username = "bangchakcc-dev@amitysolutions.com"
-const password = "1qazZAQ!"
-const clientId = "1cgb3gg81l348m66f06251nv7d"
-const cloud = "amitysolutions.com"
-const cognito = 'https://cognito-idp.ap-southeast-1.amazonaws.com/'
-const sfDomain = 'https://bangchakcorporation2--partial.sandbox.my.salesforce.com'
-const sfClientId = '3MVG9Po2PmyYruukeqcsVqYm7PEKuBTwUxAlq_USHWT_uHQDkA3RqcdAQv.zKwyaJREe8tkl93TOwcvOXWkmc'
-const sfClientSecret = '844D0505D984934725CE1DD4281069C08236B2DB979D8D2CB6AFBEFA1108337E'
-const sfUserName = 'crmadmin1@bangchak.co.th.partial'
-const sfPassword = 'crm@dmin2021uinCClvzcNK1R4xdzOeCUJ3L'
-const sfChannelId = '123456789'
+const username = process.env.username
+const password = process.env.password
+const clientId = process.env.clientId
+const cloud = process.env.cloud
+const cognito = process.env.cognito
+const sfDomain = process.env.sfDomain
+const sfClientId = process.env.sfClientId
+const sfClientSecret = process.env.sfClientSecret
+const sfUserName = process.env.sfUserName
+const sfPassword = process.env.sfPassword
+const sfChannelId = process.env.sfChannelId
 
 module.exports.outboxMessage = async (event) => {
   const rawData = event.body;
@@ -134,55 +135,6 @@ async function getToken() {
   }
 }
 
-// async function getNetworkId() {
-//   let tokenId = await getToken();
-//   let config = {
-//     method: 'get',
-//     url: `https://cim.${cloud}/api/v1/channels`,
-//     headers: {
-//       'Authorization': `Bearer ${tokenId}`
-//     }
-//   }
-
-//   try {
-//     let res = await axios.request(config);
-//     let networkId = res.data[ 0 ].networkId
-//     return {
-//       tokenId,
-//       networkId
-//     }
-//   } catch (error) {
-//     console.log("Error status: ", error.statusCode)
-//   }
-// }
-
-// async function access_credential() {
-//   let access_credential = await getNetworkId();
-
-//   let tokenId = access_credential.tokenId;
-//   let networkId = access_credential.networkId;
-//   let config = {
-//     method: 'get',
-//     url: `https://cim.${cloud}/api/v1/networks/${networkId}`,
-//     headers: {
-//       'Authorization': `Bearer ${tokenId}`
-//     }
-//   }
-//   try {
-//     let res = await axios.request(config);
-//     let apiKey = res.data.apiKey;
-//     let flowEngine = res.data.config.flowEngines
-//     return {
-//       tokenId,
-//       networkId,
-//       apiKey,
-//       flowEngine,
-//     }
-
-//   } catch (error) {
-//     console.log("Error status: ", error.statusCode)
-//   }
-// }
 
 async function userInfo(userId) {
   let tokenId = await getToken();
