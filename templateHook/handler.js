@@ -82,7 +82,9 @@ module.exports.templateHook = async (event) => {
       // console.log("oli_price_template_message.contents :", JSON.stringify(oli_price_template_message[0].contents));
       // console.log("oli_price_template_message[0].contents.body.contents.length :", oli_price_template_message[0].contents.body.contents.length);
 
-      let newString = metadata.replace(/\n+$/, "");
+      let newString = metadata.replace(/\\n/g, '\n');
+
+      console.log("gpt_answer_template :", JSON.stringify(newString));
 
       gpt_answer_template.messages[0].text = newString
 
