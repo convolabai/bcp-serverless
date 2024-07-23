@@ -28,25 +28,24 @@ module.exports.templateHook = async (event) => {
       let oli_price_template_message = oli_price_template.messages;
 
       console.log("oli_price_template_message :", JSON.stringify(oli_price_template_message));
-      console.log("oli_price_template_message.contents :", JSON.stringify(oli_price_template_message[0].contents));
-      console.log("oli_price_template_message[0].contents.body.contents.length :", oli_price_template_message[0].contents.body.contents.length);
+      console.log("oli_price_template_message.contents :", JSON.stringify(oli_price_template_message[ 0 ].contents));
+      console.log("oli_price_template_message[0].contents.body.contents.length :", oli_price_template_message[ 0 ].contents.body.contents.length);
 
       const oil_price_today = await getOilPrice();
 
-      for(let i = 0 ; i < oli_price_template_message[0].contents.body.contents.length ; i++)
-      {
-        console.log("item : ", oli_price_template_message[0].contents.body.contents[i].contents[1]?.text)
-        if(oli_price_template_message[0].contents.body.contents[i].contents[1]?.text === "oil_price_" + (i-1)){
+      for (let i = 0; i < oli_price_template_message[ 0 ].contents.body.contents.length; i++) {
+        console.log("item : ", oli_price_template_message[ 0 ].contents.body.contents[ i ].contents[ 1 ]?.text)
+        if (oli_price_template_message[ 0 ].contents.body.contents[ i ].contents[ 1 ]?.text === "oil_price_" + (i - 1)) {
           console.log("HIT!!");
-          
-          oli_price_template_message[0].contents.body.contents[i].contents[1].text = JSON.stringify(oil_price_today[i-2].PriceToday);
+
+          oli_price_template_message[ 0 ].contents.body.contents[ i ].contents[ 1 ].text = JSON.stringify(oil_price_today[ i - 2 ].PriceToday);
         }
-        else{
+        else {
           console.log("NOT HIT!!");
         }
       }
 
-      console.log("oil_price_today : ",oil_price_today);
+      console.log("oil_price_today : ", oil_price_today);
 
       // oli_price_template_message[0].contents.body.contents[2].contents[1].text = "41.25";
 
@@ -59,7 +58,7 @@ module.exports.templateHook = async (event) => {
         "shouldContextualize": true
       }
       console.log("sendTemplate: ", JSON.stringify(sendTemplate))
-  
+
       return {
         statusCode: 200,
         body: JSON.stringify(sendTemplate)
@@ -67,12 +66,12 @@ module.exports.templateHook = async (event) => {
     } catch (error) {
       console.log("Template ERROR : oil_price_webchat with ", error)
     }
-  }else if (jsonBody.action.action === "gpt_answer_template") {
+  } else if (jsonBody.action.action === "gpt_answer_template") {
     console.log("match gpt_answer_template")
     try {
 
       console.log("rawOutgoingMessage :", JSON.stringify(rawOutgoingMessage));
-      console.log("metadata :",metadata);
+      console.log("metadata :", metadata);
       let gpt_answer_template = rawOutgoingMessage;
       let gpt_answer_template_message = gpt_answer_template.messages;
 
@@ -82,8 +81,16 @@ module.exports.templateHook = async (event) => {
       // console.log("oli_price_template_message.contents :", JSON.stringify(oli_price_template_message[0].contents));
       // console.log("oli_price_template_message[0].contents.body.contents.length :", oli_price_template_message[0].contents.body.contents.length);
 
+
       // gpt_answer_template.messages[0].text = metadata.slice(1,metadata.length-1);
-      gpt_answer_template.messages[0].text = metadata.slice(1, metadata.length - 1).replace(/\\n/g, '\n');
+      gpt_answer_template.messages[ 0 ].text = metadata.slice(1, metadata.length - 1).replace(/\\n/g, '\n');
+
+
+      // let newString = metadata.replace(/\\n/g, '\n');
+
+      // console.log("gpt_answer_template :", JSON.stringify(newString));
+
+      // gpt_answer_template.messages[0].text = newString
 
 
       console.log("gpt_answer_template :", JSON.stringify(gpt_answer_template));
@@ -96,7 +103,7 @@ module.exports.templateHook = async (event) => {
         "shouldContextualize": true
       }
       console.log("sendTemplate: ", JSON.stringify(sendTemplate))
-  
+
       return {
         statusCode: 200,
         body: JSON.stringify(sendTemplate)
@@ -104,19 +111,19 @@ module.exports.templateHook = async (event) => {
     } catch (error) {
       console.log("Template ERROR : gpt_answer_template with ", error)
     }
-  }else if(jsonBody.action.action === "agent_message"){
+  } else if (jsonBody.action.action === "agent_message") {
     console.log("match agent_message")
     try {
 
       console.log("rawOutgoingMessage :", JSON.stringify(rawOutgoingMessage));
-      console.log("metadata :",JSON.stringify(metadata));
+      console.log("metadata :", JSON.stringify(metadata));
       let agent_message_template = rawOutgoingMessage;
       let agent_message_template_message = agent_message_template.messages;
 
       console.log("agent_message_template_message :", JSON.stringify(agent_message_template_message));
 
 
-      agent_message_template.messages[0].text = jsonBody.action.metadata?.custom_text
+      agent_message_template.messages[ 0 ].text = jsonBody.action.metadata?.custom_text
 
       console.log("agent_message_template :", JSON.stringify(agent_message_template));
 
@@ -126,7 +133,7 @@ module.exports.templateHook = async (event) => {
         "shouldContextualize": true
       }
       console.log("sendTemplate: ", JSON.stringify(sendTemplate))
-  
+
       return {
         statusCode: 200,
         body: JSON.stringify(sendTemplate)
@@ -174,8 +181,8 @@ async function getOilPrice() {
 
   try {
     let res = await axios.request(config);
-    console.log("res : ",res.data);
-    let data = res.data[0].OilList;
+    console.log("res : ", res.data);
+    let data = res.data[ 0 ].OilList;
     let jsonData = JSON.parse(data);
     return jsonData;
   } catch (error) {
