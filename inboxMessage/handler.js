@@ -56,10 +56,12 @@ module.exports.inboxMessage = async (event) => {
   const requestData = JSON.parse(decodedData);
   console.log("inbox event: ", JSON.stringify(requestData));
 
-  let isCheckMessage = requestData?.message ? requestData.message : false
+
+  let isCheckMessage = requestData?.message ? requestData.message : requestData?.type ? requestData : false;
+  console.log('isCheckMessage : ', isCheckMessage)
   if (requestData?.type === "follow" || requestData?.payload === "") {
     let credential = await access_credential()
-    console.log('credential : ',credential)
+    console.log('credential : ', credential)
     let uid = requestData?.source?.userId ? requestData.source?.userId : requestData.userId
     const config = {
       method: 'post',
@@ -87,17 +89,51 @@ module.exports.inboxMessage = async (event) => {
     }
   } else if (isCheckMessage) {
     let img_url = ''
-    if (requestData.message.type !== "text") {
+    if (isCheckMessage.type !== "text" && isCheckMessage.type !== 'postback') {
+      let credential = await access_credential()
+      const config = {
+        method: 'post',
+        url: `https://chatbot.${cloud}/api/v1/messages/action`,
+        data: {
+          channelId: jsonRawData?.message?.attributes?.channelId,
+          userId: requestData?.source?.userId ? requestData?.source?.userId : requestData.userId,
+          action: {
+            action: `@${credential.flowEngine[ 1 ].flowEngineId}/fail_template`
+          }
+        },
+        headers: {
+          'x-api-key': credential.apiKey,
+          'Content-Type': 'application/json'
+        }
+      }
+      console.log(JSON.stringify(config))
 
-      if (requestData.message.type !== 'sticker') {
-        const configUpload = {
-          method: 'GET',
-          url: `${line_domain}/${requestData?.message?.id}/content`,
-          headers: {
-            'Authorization': `Bearer ${line_token}`,
-          },
-          responseType: 'arraybuffer', // Ensure the response is returned as a binary buffer
-        };
+      try {
+        await axios.request(config)
+        console.log("Fail action success !!!")
+      } catch (error) {
+        console.log("Fail !!!")
+      }
+
+      if (isCheckMessage.type !== "text" && isCheckMessage.type !== 'sticker' && requestData?.type !== 'postback') {
+        let configUpload = {}
+        if (jsonRawData?.message?.attributes?.channelId === '65eec63a33071c0231bdc094') {
+          configUpload = {
+            method: 'GET',
+            url: requestData?.url,
+            responseType: 'arraybuffer', // Ensure the response is returned as a binary buffer
+          };
+
+        } else {
+          configUpload = {
+            method: 'GET',
+            url: `${line_domain}/${requestData?.message?.id}/content`,
+            headers: {
+              'Authorization': `Bearer ${line_token}`,
+            },
+            responseType: 'arraybuffer', // Ensure the response is returned as a binary buffer
+          };
+        }
 
         try {
           const response = await axios.request(configUpload);
@@ -110,7 +146,7 @@ module.exports.inboxMessage = async (event) => {
           }
 
           // Get the file type using the imported function
-          const file_type = await fileType.fromBuffer(response.data);
+          const file_type = await fileType.fileTypeFromBuffer(response.data);
 
           // Generate a file name
           const fileName = `image_${Date.now()}.${file_type.ext}`;
@@ -134,31 +170,7 @@ module.exports.inboxMessage = async (event) => {
       }
 
 
-      let credential = await access_credential()
-      const config = {
-        method: 'post',
-        url: `https://chatbot.${cloud}/api/v1/messages/action`,
-        data: {
-          channelId: jsonRawData.message.attributes.channelId,
-          userId: requestData.source.userId,
-          action: {
-            action: `@${credential.flowEngine[ 1 ].flowEngineId}/fail_template`
-          }
-        },
-        headers: {
-          'x-api-key': credential.apiKey,
-          'Content-Type': 'application/json'
-        }
-      }
-      console.log(JSON.stringify(config))
 
-      try {
-        await axios.request(config)
-        console.log(`Image message ${requestData.source.userId} sucess!!`)
-
-      } catch (error) {
-        console.log("Image message Fail !!!")
-      }
 
     }
 
@@ -171,14 +183,37 @@ module.exports.inboxMessage = async (event) => {
     console.log(timestampInSeconds)
     console.log(isoString)
 
+    const info = await userInfo(userId)
+
     let bodyConfig = {}
+
     if (jsonRawData.message?.attributes?.channelId === "2004036487") {
-      const info = await userInfo(userId)
+      console.log('isCheckMessage.type : ', isCheckMessage.type)
       console.log('user info : ', info)
+      let messageToSF = ''
+      let typeSF = ''
+      if(isCheckMessage.type === 'text'){
+        typeSF = 'TEXT'
+        messageToSF = isCheckMessage.text
+      }else if(isCheckMessage.type === 'postback'){
+        typeSF = 'TEXT'
+        messageToSF = isCheckMessage.postback.data
+      }else if(isCheckMessage.type === 'image'){
+        typeSF = 'IMG'
+        messageToSF = img_url
+      }else if(isCheckMessage.type === 'video'){
+        typeSF = 'VIDEO'
+        messageToSF = img_url
+      }else if(isCheckMessage.type === 'sticker'){
+        typeSF = 'STICKER'
+        messageToSF = `https://stickershop.line-scdn.net/stickershop/v1/sticker/${requestData.message.stickerId}/android/sticker.png`
+      }
+     
+
       bodyConfig = {
         "contents": [ {
-          "type": requestData.message.type === 'text' ? "TEXT" : requestData.message.type === 'image' ? "IMG": requestData.message.type === 'video' ? "VIDEO" : "STICKER",
-          "message": requestData?.message?.text ? requestData.message.text : img_url !== '' ? img_url : `https://stickershop.line-scdn.net/stickershop/v1/sticker/${requestData.message.stickerId}/android/sticker.png`
+          "type": typeSF,
+          "message": messageToSF
         } ],
         "channelType": "LINE",
         "senderType": "USER",
@@ -193,16 +228,15 @@ module.exports.inboxMessage = async (event) => {
             "userId": userId
           } ]
       }
-      console.log(new Date())
+      console.log(bodyConfig.contents)
+      console.log(bodyConfig.users)
     } else {
       console.log('webChat')
-      const info = await userInfo(userId)
-      console.log('user info : ', info)
 
       bodyConfig = {
         "contents": [ {
-          "type": "TEXT",
-          "message": requestData.payload
+          "type": requestData?.type === 'text' ? "TEXT" : requestData?.type === 'image' ? "IMG" : requestData?.type === 'video' ? "VIDEO" : "STICKER",
+          "message": requestData?.type === 'text' ? requestData?.payload : requestData?.type === 'image' ? img_url : requestData?.payload
         } ],
         "channelType": "WEBCHAT",
         "senderType": "USER",
@@ -226,15 +260,14 @@ module.exports.inboxMessage = async (event) => {
     } catch (error) {
       console.log("Error status: ", error)
     }
-  }
 
 
 
 
-  return {
-    statusCode: 200,
   };
-};
+
+}
+
 
 async function getToken() {
   const body = {
@@ -267,7 +300,7 @@ async function getToken() {
 
 async function getNetworkId() {
   let tokenId = await getToken();
-  console.log('tokenId : ',tokenId)
+  console.log('tokenId : ', tokenId)
   let config = {
     method: 'get',
     url: `https://cim.${cloud}/api/v1/channels`,

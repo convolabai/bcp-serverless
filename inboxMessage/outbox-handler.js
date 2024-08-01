@@ -45,52 +45,53 @@ module.exports.outboxMessage = async (event) => {
     })
   };
 
-  console.log('transformedData : ',transformedData)
+  console.log('transformedData : ', transformedData)
 
   const currentDate = new Date();
   const timestampInSeconds = Math.floor(currentDate.getTime() / 1000);
   const isoString = currentDate.toISOString();
 
   let bodyConfig = {}
-  if (requestData.type === "LINE") {
-    const info = await userInfo(requestData.userId)
-    console.log('user info : ', info)
+  const info = await userInfo(requestData.userId)
+  if (info.metadata.ticket_status === 'close') {
+    if (requestData.type === "LINE") {
+      console.log('user info : ', info)
 
-    bodyConfig = {
-      "contents":  transformedData.contents ,
-      "channelType": "LINE",
-      "senderType": "BOT",
-      "CreatedAt": timestampInSeconds,
-      "CreateDateTime": isoString,
-      "ChannelId": sfChannelId,
-      "users": [
-        {
-          "displayName": info.displayName,
-          "imageUrl": info.imageUrl,
-          "status": "Active",
-          "userId": requestData.userId
-        } ]
-    }
-    console.log(new Date())
-  } else {
-    console.log('webChat')
-    const info = await userInfo(requestData.userId)
-    console.log('user info : ', info)
+      bodyConfig = {
+        "contents": transformedData.contents,
+        "channelType": "LINE",
+        "senderType": "BOT",
+        "CreatedAt": timestampInSeconds,
+        "CreateDateTime": isoString,
+        "ChannelId": sfChannelId,
+        "users": [
+          {
+            "displayName": info.displayName,
+            "imageUrl": info.imageUrl,
+            "status": "Active",
+            "userId": requestData.userId
+          } ]
+      }
+      console.log(new Date())
+    } else {
+      console.log('webChat')
+      console.log('user info : ', info)
 
-    bodyConfig = {
-      "contents":  transformedData.contents ,
-      "channelType": "WEBCHAT",
-      "senderType": "BOT",
-      "CreatedAt": timestampInSeconds,
-      "CreateDateTime": isoString,
-      "ChannelId": sfChannelId,
-      "users": [
-        {
-          "displayName": "",
-          "imageUrl": "",
-          "status": "Active",
-          "userId": requestData.userId
-        } ]
+      bodyConfig = {
+        "contents": transformedData.contents,
+        "channelType": "WEBCHAT",
+        "senderType": "BOT",
+        "CreatedAt": timestampInSeconds,
+        "CreateDateTime": isoString,
+        "ChannelId": sfChannelId,
+        "users": [
+          {
+            "displayName": "",
+            "imageUrl": "",
+            "status": "Active",
+            "userId": requestData.userId
+          } ]
+      }
     }
   }
 
