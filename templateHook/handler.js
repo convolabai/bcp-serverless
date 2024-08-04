@@ -6,7 +6,7 @@ const axios = require('axios')
 // let clientId = process.env.CLIENTID
 // const cloud = process.env.CLOUDURL
 
-let username = "bangchakcc-dev@amitysolutions.com"
+let username = "bangchakcc-uat@amitysolutions.com"
 let password = "1qazZAQ!"
 let clientId = "1cgb3gg81l348m66f06251nv7d"
 const cloud = "amitysolutions.com"

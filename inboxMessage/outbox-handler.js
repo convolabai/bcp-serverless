@@ -2,7 +2,7 @@
 const axios = require('axios')
 require('dotenv').config();
 
-const username = "bangchakcc-dev@amitysolutions.com"
+const username = "bangchakcc-uat@amitysolutions.com"
 const password = "1qazZAQ!"
 const clientId = "1cgb3gg81l348m66f06251nv7d"
 const cloud = "amitysolutions.com"

@@ -6,13 +6,13 @@ frameworkVersion: "3"
 provider:
   name: aws
   runtime: nodejs18.x
-  stage: dev
+  stage: uat
   region: ap-southeast-1
   httpApi:
     cors: true
   environment:
-    test_na: ${env.test_na}
-    username : "bangchakcc-dev@amitysolutions.com"
+    # test_na: ${env.test_na}
+    username : "bangchakcc-uat@amitysolutions.com"
     password : "1qazZAQ!"
     clientId : "1cgb3gg81l348m66f06251nv7d"
     cloud : "amitysolutions.com"

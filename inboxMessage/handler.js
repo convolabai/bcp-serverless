@@ -17,7 +17,7 @@ const axios = require('axios');
 // const line_token = process.env.line_token
 // const line_domain = process.env.line_domain
 // const s3Bucket = process.env.s3Bucket
-const username = "bangchakcc-dev@amitysolutions.com"
+const username = "bangchakcc-uat@amitysolutions.com"
 const password = "1qazZAQ!"
 const clientId = "1cgb3gg81l348m66f06251nv7d"
 const cloud = "amitysolutions.com"
@@ -175,7 +175,7 @@ module.exports.inboxMessage = async (event) => {
     }
 
 
-    let userId = jsonRawData.message?.attributes?.channelId === "2004036487" ? requestData?.source?.userId : requestData?.userId
+    let userId = jsonRawData.message?.attributes?.channelId === "2004681070" ? requestData?.source?.userId : requestData?.userId
 
     const currentDate = new Date();
     const timestampInSeconds = Math.floor(currentDate.getTime() / 1000);
@@ -187,7 +187,7 @@ module.exports.inboxMessage = async (event) => {
 
     let bodyConfig = {}
 
-    if (jsonRawData.message?.attributes?.channelId === "2004036487") {
+    if (jsonRawData.message?.attributes?.channelId === "2004681070") {
       console.log('isCheckMessage.type : ', isCheckMessage.type)
       console.log('user info : ', info)
       let messageToSF = ''
