@@ -1,0 +1,23 @@
+service: bcp-serverless-segment
+useDotenv: true
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: dev
+  region: ap-southeast-1
+  httpApi:
+    cors: true
+
+functions:
+  updateSegment:
+    handler: handler.updateSegment
+    events:
+      - httpApi:
+          method: POST
+          path: /api/update_segment
+
+plugins:
+  - serverless-prune-plugin
