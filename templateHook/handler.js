@@ -155,8 +155,8 @@ module.exports.templateHook = async (event) => {
       console.log("agent_img_template_message :", JSON.stringify(agent_img_template_message));
 
 
-      agent_img_template.messages[ 0 ].text = jsonBody.action.metadata?.custom_text
-
+      agent_img_template.messages[ 0 ].originalContentUrl = jsonBody.action.metadata?.custom_text
+      agent_img_template.messages[ 0 ].previewImageUrl = jsonBody.action.metadata?.custom_text
       console.log("agent_img_template :", JSON.stringify(agent_img_template));
 
       ////////////////////////////
