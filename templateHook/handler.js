@@ -143,6 +143,70 @@ module.exports.templateHook = async (event) => {
     }
 
 
+  } else if (jsonBody.action.action === "agent_img") {
+    console.log("match agent_img")
+    try {
+
+      console.log("rawOutgoingMessage :", JSON.stringify(rawOutgoingMessage));
+      console.log("metadata :", JSON.stringify(metadata));
+      let agent_img_template = rawOutgoingMessage;
+      let agent_img_template_message = agent_img_template.messages;
+
+      console.log("agent_img_template_message :", JSON.stringify(agent_img_template_message));
+
+
+      agent_img_template.messages[ 0 ].text = jsonBody.action.metadata?.custom_text
+
+      console.log("agent_img_template :", JSON.stringify(agent_img_template));
+
+      ////////////////////////////
+      const sendTemplate = {
+        "outgoingMessage": agent_img_template,
+        "shouldContextualize": true
+      }
+      console.log("sendTemplate: ", JSON.stringify(sendTemplate))
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify(sendTemplate)
+      }
+    } catch (error) {
+      console.log("Template ERROR : agent_img_template with ", error)
+    }
+
+
+  } else if (jsonBody.action.action === "agent_video") {
+    console.log("match agent_video")
+    try {
+
+      console.log("rawOutgoingMessage :", JSON.stringify(rawOutgoingMessage));
+      console.log("metadata :", JSON.stringify(metadata));
+      let agent_video_template = rawOutgoingMessage;
+      let agent_video_template_message = agent_video_template.messages;
+
+      console.log("agent_video_template_message :", JSON.stringify(agent_video_template_message));
+
+
+      agent_video_template.messages[ 0 ].text = jsonBody.action.metadata?.custom_text
+
+      console.log("agent_video_template :", JSON.stringify(agent_video_template));
+
+      ////////////////////////////
+      const sendTemplate = {
+        "outgoingMessage": agent_video_template,
+        "shouldContextualize": true
+      }
+      console.log("sendTemplate: ", JSON.stringify(sendTemplate))
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify(sendTemplate)
+      }
+    } catch (error) {
+      console.log("Template ERROR : agent_video_template with ", error)
+    }
+
+
   }
   else {
     const sendTemplate = {
