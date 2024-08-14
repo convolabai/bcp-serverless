@@ -63,7 +63,7 @@ module.exports.outboxMessage = async (event) => {
         "senderType": "BOT",
         "CreatedAt": timestampInSeconds,
         "CreateDateTime": isoString,
-        "ChannelId": sfChannelId,
+        "ChannelId": requestData.channelId,
         "users": [
           {
             "displayName": info.displayName,
@@ -83,10 +83,10 @@ module.exports.outboxMessage = async (event) => {
         "senderType": "BOT",
         "CreatedAt": timestampInSeconds,
         "CreateDateTime": isoString,
-        "ChannelId": sfChannelId,
+        "ChannelId": requestData.channelId,
         "users": [
           {
-            "displayName": "",
+            "displayName": requestData.userId,
             "imageUrl": "",
             "status": "Active",
             "userId": requestData.userId

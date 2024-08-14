@@ -219,7 +219,7 @@ module.exports.inboxMessage = async (event) => {
         "senderType": "USER",
         "CreatedAt": timestampInSeconds,
         "CreateDateTime": isoString,
-        "ChannelId": sfChannelId,
+        "ChannelId": jsonRawData.message?.attributes?.channelId,
         "users": [
           {
             "displayName": info.displayName,
@@ -242,7 +242,7 @@ module.exports.inboxMessage = async (event) => {
         "senderType": "USER",
         "CreatedAt": timestampInSeconds,
         "CreateDateTime": isoString,
-        "ChannelId": sfChannelId,
+        "ChannelId": jsonRawData.message?.attributes?.channelId,
         "users": [
           {
             "displayName": "",
