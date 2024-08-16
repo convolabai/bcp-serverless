@@ -10,6 +10,11 @@ provider:
   region: ap-southeast-1
   httpApi:
     cors: true
+  environment:
+    userAmity : ${env.userAmity}
+    passwordAmity : ${env.passwordAmity}
+    clientId : ${env.clientId}
+    cloud : ${env.cloud}
 
 functions:
   templateHook:
