@@ -221,7 +221,7 @@ module.exports.inboxMessage = async (event) => {
 
       bodyConfig = {
         "contents": [ {
-          "type": requestData?.type === 'text' ? "TEXT" : requestData?.type === 'image' ? "IMG" : requestData?.type === 'video' ? "VIDEO" : "STICKER",
+          "type": requestData?.type === 'text' ? "TEXT" : requestData?.type === 'image' ? "IMG" : requestData?.type === 'video' ? "VIDEO" : requestData?.type === 'postback' ? "TEXT" : "STICKER",
           "message": requestData?.type === 'text' ? requestData?.payload : requestData?.type === 'image' ? img_url : requestData?.payload
         } ],
         "channelType": "WEBCHAT",
