@@ -3,36 +3,22 @@ require('dotenv').config();
 const AWS = require('aws-sdk');
 const axios = require('axios');
 
-// const username = process.env.username
-// const password = process.env.password
-// const clientId = process.env.clientId
-// const cloud = process.env.cloud
-// const cognito = process.env.cognito
-// const sfDomain = process.env.sfDomain
-// const sfClientId = process.env.sfClientId
-// const sfClientSecret = process.env.sfClientSecret
-// const sfUserName = process.env.sfUserName
-// const sfPassword = process.env.sfPassword
-// const sfChannelId = process.env.sfChannelId
-// const line_token = process.env.line_token
-// const line_domain = process.env.line_domain
-// const s3Bucket = process.env.s3Bucket
-const username = "bangchakcc-dev@amitysolutions.com"
-const password = "1qazZAQ!"
-const clientId = "1cgb3gg81l348m66f06251nv7d"
-const cloud = "amitysolutions.com"
-const cognito = 'https://cognito-idp.ap-southeast-1.amazonaws.com/'
-const sfDomain = 'https://bangchakcorporation2--partial.sandbox.my.salesforce.com'
-const sfClientId = '3MVG9Po2PmyYruukeqcsVqYm7PEKuBTwUxAlq_USHWT_uHQDkA3RqcdAQv.zKwyaJREe8tkl93TOwcvOXWkmc'
-const sfClientSecret = '844D0505D984934725CE1DD4281069C08236B2DB979D8D2CB6AFBEFA1108337E'
-const sfUserName = 'crmadmin1@bangchak.co.th.partial'
-const sfPassword = 'crm@dmin2021uinCClvzcNK1R4xdzOeCUJ3L'
-const sfChannelId = '123456789'
-const line_token = '7lMwHQOUUj5A5OSnRSRfxGs5ERkBixZA6XXbFF7rmLeuSyquojlgkF+dJoIyYZxsj6G8jXTUo7KP61CHa0g4mzx2CZXxp0yXtiDRBdILMXBs8EGjMysKeRZw9QTzx9uNI5bpMQupEYlpf+7Q1+8ucwdB04t89/1O/w1cDnyilFU=';
-const line_domain = 'https://api-data.line.me/v2/bot/message';
-const s3Bucket = 'deposit-files';
+const username = process.env.userAmity
+const password = process.env.passwordAmity
+const clientId = process.env.clientId
+const cloud = process.env.cloud
+const cognito = process.env.cognito
+const sfDomain = process.env.sfDomain
+const sfClientId = process.env.sfClientId
+const sfClientSecret = process.env.sfClientSecret
+const sfUserName = process.env.sfUserName
+const sfPassword = process.env.sfPassword
+const line_token = process.env.line_token
+const line_domain = process.env.line_domain
+const s3Bucket = process.env.s3Bucket
 const aws_key = process.env.aws_key
 const aws_secret = process.env.aws_secret
+
 
 let fileType;
 
@@ -219,7 +205,7 @@ module.exports.inboxMessage = async (event) => {
         "senderType": "USER",
         "CreatedAt": timestampInSeconds,
         "CreateDateTime": isoString,
-        "ChannelId": sfChannelId,
+        "ChannelId": jsonRawData.message?.attributes?.channelId,
         "users": [
           {
             "displayName": info.displayName,
@@ -242,7 +228,7 @@ module.exports.inboxMessage = async (event) => {
         "senderType": "USER",
         "CreatedAt": timestampInSeconds,
         "CreateDateTime": isoString,
-        "ChannelId": sfChannelId,
+        "ChannelId": jsonRawData.message?.attributes?.channelId,
         "users": [
           {
             "displayName": "",
