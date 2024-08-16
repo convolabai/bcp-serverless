@@ -1,11 +1,6 @@
 'use strict';
 const axios = require('axios')
 
-const username = process.env.userAmity
-const password = process.env.passwordAmity
-const clientId = process.env.clientId
-const cloud = process.env.cloud
-
 
 module.exports.templateHook = async (event) => {
   console.log("event :", JSON.stringify(event))
