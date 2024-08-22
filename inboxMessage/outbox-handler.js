@@ -13,7 +13,6 @@ const sfClientSecret = process.env.sfClientSecret
 const sfUserName = process.env.sfUserName
 const sfPassword = process.env.sfPassword
 
-
 module.exports.outboxMessage = async (event) => {
   const rawData = event.body;
   const jsonRawData = JSON.parse(rawData);
@@ -50,13 +49,12 @@ module.exports.outboxMessage = async (event) => {
   const currentDate = new Date();
   const timestampInSeconds = Math.floor(currentDate.getTime() / 1000);
   const isoString = currentDate.toISOString();
-
+  const uidUser = requestData.userId
   let bodyConfig = {}
-  const info = await userInfo(requestData.userId)
-  if (info.metadata.ticket_status === 'close') {
+  const info = await userInfo(uidUser)
+  if (info?.metadata?.bot_mode === 'bot') {
     if (requestData.type === "LINE") {
       console.log('user info : ', info)
-
       bodyConfig = {
         "contents": transformedData.contents,
         "channelType": "LINE",
@@ -72,11 +70,9 @@ module.exports.outboxMessage = async (event) => {
             "userId": requestData.userId
           } ]
       }
-      console.log(new Date())
     } else {
       console.log('webChat')
       console.log('user info : ', info)
-
       bodyConfig = {
         "contents": transformedData.contents,
         "channelType": "WEBCHAT",
@@ -93,15 +89,14 @@ module.exports.outboxMessage = async (event) => {
           } ]
       }
     }
-  }
+    try {
+      const token_sf = await getSFToken()
+      await sendHistory(token_sf, bodyConfig)
+    } catch (error) {
+      console.log("Error status: ", error)
+    }
 
-  try {
-    const token_sf = await getSFToken()
-    await sendHistory(token_sf, bodyConfig)
-  } catch (error) {
-    console.log("Error status: ", error)
   }
-
 
 };
 
