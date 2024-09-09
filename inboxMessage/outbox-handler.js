@@ -14,10 +14,11 @@ const sfUserName = process.env.sfUserName
 const sfPassword = process.env.sfPassword
 
 module.exports.outboxMessage = async (event) => {
+  console.log(JSON.stringify(event, null, 2))
+
   const rawData = event.body;
   const jsonRawData = JSON.parse(rawData);
   console.log('jsonRawData : ', jsonRawData)
-  //decode part
   const rawBody = jsonRawData.message.data;
   const decodedData = Buffer.from(rawBody, 'base64').toString('utf-8');
   const requestData = JSON.parse(decodedData);
@@ -51,8 +52,11 @@ module.exports.outboxMessage = async (event) => {
   const isoString = currentDate.toISOString();
   const uidUser = requestData.userId
   let bodyConfig = {}
+
   const info = await userInfo(uidUser)
-  if (info?.metadata?.bot_mode === 'bot') {
+  // if (info?.metadata?.bot_mode === 'bot') {
+    const idsToCheck = ['ly5fpnsa', 'lzs416kz', 'lzs2q0u3'];
+    if (!idsToCheck.includes(requestData?.payload[0]?.id)) {
     if (requestData.type === "LINE") {
       console.log('user info : ', info)
       bodyConfig = {
