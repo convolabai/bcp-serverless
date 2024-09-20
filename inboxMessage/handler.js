@@ -29,19 +29,13 @@ AWS.config.update({
 });
 
 module.exports.inboxMessage = async (event) => {
-
-  console.log("event: ", event);
   const rawData = event.body;
-  // console.log(rawData)
-
   const jsonRawData = JSON.parse(rawData);
   console.log('jsonRawData : ', jsonRawData)
-  //decode part
   const rawBody = jsonRawData.message.data;
   const decodedData = Buffer.from(rawBody, 'base64').toString('utf-8');
   const requestData = JSON.parse(decodedData);
   console.log("inbox event: ", JSON.stringify(requestData));
-
 
   let isCheckMessage = requestData?.message ? requestData.message : requestData?.type ? requestData : false;
   console.log('isCheckMessage : ', isCheckMessage)
@@ -92,8 +86,6 @@ module.exports.inboxMessage = async (event) => {
           'Content-Type': 'application/json'
         }
       }
-      console.log(JSON.stringify(config))
-
       try {
         await axios.request(config)
         console.log("Fail action success !!!")
@@ -117,84 +109,62 @@ module.exports.inboxMessage = async (event) => {
             headers: {
               'Authorization': `Bearer ${line_token}`,
             },
-            responseType: 'arraybuffer', // Ensure the response is returned as a binary buffer
+            responseType: 'arraybuffer',
           };
         }
 
         try {
           const response = await axios.request(configUpload);
           console.log('Image message fetched successfully!');
-
-          // Dynamically import fileType
           if (!fileType) {
             const module = await import('file-type');
-            fileType = module.default || module; // Handle ES Module default export
+            fileType = module.default || module;
           }
-
-          // Get the file type using the imported function
           const file_type = await fileType.fileTypeFromBuffer(response.data);
-
-          // Generate a file name
           const fileName = `image_${Date.now()}.${file_type.ext}`;
-
-          // Upload to S3
           const uploadResult = await uploadToS3(response.data, fileName, file_type.mime);
-
           if (uploadResult) {
             console.log('Image uploaded to S3 successfully!', uploadResult.file_url);
-            // return uploadResult.file_url;
-
             img_url = uploadResult.file_url
           } else {
             console.error('Image upload to S3 failed!');
           }
-
         } catch (error) {
           console.error('Image message fetch failed!', error);
         }
-
       }
-
-
-
-
     }
 
-
     let userId = jsonRawData.message?.attributes?.channelId === "2004036487" ? requestData?.source?.userId : requestData?.userId
-
     const currentDate = new Date();
     const timestampInSeconds = Math.floor(currentDate.getTime() / 1000);
     const isoString = currentDate.toISOString();
-    console.log(timestampInSeconds)
-    console.log(isoString)
-
     const info = await userInfo(userId)
-
     let bodyConfig = {}
-
     if (jsonRawData.message?.attributes?.channelId === "2004036487") {
       console.log('isCheckMessage.type : ', isCheckMessage.type)
       console.log('user info : ', info)
       let messageToSF = ''
       let typeSF = ''
-      if(isCheckMessage.type === 'text'){
+      if (isCheckMessage.type === 'text') {
         typeSF = 'TEXT'
         messageToSF = isCheckMessage.text
-      }else if(isCheckMessage.type === 'postback'){
+      } else if (isCheckMessage.type === 'postback') {
         typeSF = 'TEXT'
         messageToSF = isCheckMessage.postback.data
-      }else if(isCheckMessage.type === 'image'){
+      } else if (isCheckMessage.type === 'image') {
         typeSF = 'IMG'
         messageToSF = img_url
-      }else if(isCheckMessage.type === 'video'){
+      } else if (isCheckMessage.type === 'video') {
         typeSF = 'VIDEO'
         messageToSF = img_url
-      }else if(isCheckMessage.type === 'sticker'){
+      } else if (isCheckMessage.type === 'sticker') {
         typeSF = 'STICKER'
         messageToSF = `https://stickershop.line-scdn.net/stickershop/v1/sticker/${requestData.message.stickerId}/android/sticker.png`
+      }else if (isCheckMessage.type === 'file'){
+        typeSF = 'FILE'
+        messageToSF = img_url
       }
-     
 
       bodyConfig = {
         "contents": [ {
@@ -238,18 +208,12 @@ module.exports.inboxMessage = async (event) => {
           } ]
       }
     }
-
-
     try {
       const token_sf = await getSFToken()
       await sendHistory(token_sf, bodyConfig)
     } catch (error) {
       console.log("Error status: ", error)
     }
-
-
-
-
   };
 
 }
