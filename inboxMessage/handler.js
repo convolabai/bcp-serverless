@@ -161,7 +161,7 @@ module.exports.inboxMessage = async (event) => {
       } else if (isCheckMessage.type === 'sticker') {
         typeSF = 'STICKER'
         messageToSF = `https://stickershop.line-scdn.net/stickershop/v1/sticker/${requestData.message.stickerId}/android/sticker.png`
-      }else if (isCheckMessage.type === 'file'){
+      } else if (isCheckMessage.type === 'file') {
         typeSF = 'FILE'
         messageToSF = img_url
       }
@@ -188,11 +188,34 @@ module.exports.inboxMessage = async (event) => {
       console.log(bodyConfig.users)
     } else {
       console.log('webChat')
+      let messageMSG = ''
+      let typeMSG = ''
+      if (requestData?.type === 'text') {
+        typeMSG = "TEXT"
+        messageMSG = requestData?.payload
+      }else if(requestData?.type === 'image'){
+        typeMSG = 'IMG'
+        messageMSG = img_url
+      } else if (requestData?.type === 'video') {
+        typeMSG = 'VIDEO'
+        messageMSG = img_url
+      }else if (requestData?.type === 'postback') {
+        typeMSG = 'TEXT'
+        messageMSG = isCheckMessage.postback.data
+      }else if(requestData?.type === 'file'){
+        typeMSG = 'FILE'
+        messageMSG = img_url
+      }
 
+      
       bodyConfig = {
+        // "contents": [ {
+        //   "type": requestData?.type === 'text' ? "TEXT" : requestData?.type === 'image' ? "IMG" : requestData?.type === 'video' ? "VIDEO" : requestData?.type === 'postback' ? "TEXT" : "STICKER",
+        //   "message": requestData?.type === 'text' ? requestData?.payload : requestData?.type === 'image' ? img_url : requestData?.payload
+        // } ],
         "contents": [ {
-          "type": requestData?.type === 'text' ? "TEXT" : requestData?.type === 'image' ? "IMG" : requestData?.type === 'video' ? "VIDEO" : requestData?.type === 'postback' ? "TEXT" : "STICKER",
-          "message": requestData?.type === 'text' ? requestData?.payload : requestData?.type === 'image' ? img_url : requestData?.payload
+          "type": typeMSG,
+          "message": messageMSG
         } ],
         "channelType": "WEBCHAT",
         "senderType": "USER",
@@ -208,6 +231,8 @@ module.exports.inboxMessage = async (event) => {
           } ]
       }
     }
+
+    console.log('content webchat : ', bodyConfig.contents)
     try {
       const token_sf = await getSFToken()
       await sendHistory(token_sf, bodyConfig)
