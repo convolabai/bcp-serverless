@@ -31,14 +31,14 @@ AWS.config.update({
 module.exports.inboxMessage = async (event) => {
   const rawData = event.body;
   const jsonRawData = JSON.parse(rawData);
-  console.log('jsonRawData : ', jsonRawData)
+  // console.log('jsonRawData : ', jsonRawData)
   const rawBody = jsonRawData.message.data;
   const decodedData = Buffer.from(rawBody, 'base64').toString('utf-8');
   const requestData = JSON.parse(decodedData);
   console.log("inbox event: ", JSON.stringify(requestData));
 
   let isCheckMessage = requestData?.message ? requestData.message : requestData?.type ? requestData : false;
-  console.log('isCheckMessage : ', isCheckMessage)
+  // console.log('isCheckMessage : ', isCheckMessage)
   if (requestData?.type === "follow" || requestData?.payload === "") {
     let credential = await access_credential()
     console.log('credential : ', credential)
@@ -58,7 +58,6 @@ module.exports.inboxMessage = async (event) => {
         'Content-Type': 'application/json'
       }
     }
-    console.log(JSON.stringify(config))
 
     try {
       await axios.request(config)
@@ -99,7 +98,7 @@ module.exports.inboxMessage = async (event) => {
           configUpload = {
             method: 'GET',
             url: requestData?.url,
-            responseType: 'arraybuffer', // Ensure the response is returned as a binary buffer
+            responseType: 'arraybuffer',
           };
 
         } else {
@@ -142,16 +141,17 @@ module.exports.inboxMessage = async (event) => {
     const info = await userInfo(userId)
     let bodyConfig = {}
     if (jsonRawData.message?.attributes?.channelId === "2004036487") {
-      console.log('isCheckMessage.type : ', isCheckMessage.type)
-      console.log('user info : ', info)
+      console.log( "line")
+      // console.log('isCheckMessage : ', isCheckMessage)
+      console.log('user info line : ', info)
       let messageToSF = ''
       let typeSF = ''
       if (isCheckMessage.type === 'text') {
         typeSF = 'TEXT'
-        messageToSF = isCheckMessage.text
+        messageToSF =  info.metadata.inSession === 'comment' ? "ทำการให้ความคิดเห็นประเมิน survey&score" : isCheckMessage.text
       } else if (isCheckMessage.type === 'postback') {
         typeSF = 'TEXT'
-        messageToSF = isCheckMessage.postback.data
+        messageToSF = isCheckMessage.postback.data.includes("survey&score") ? "ทำการประเมิน survey&score" : requestData.payload
       } else if (isCheckMessage.type === 'image') {
         typeSF = 'IMG'
         messageToSF = img_url
@@ -185,14 +185,15 @@ module.exports.inboxMessage = async (event) => {
           } ]
       }
       console.log(bodyConfig.contents)
-      console.log(bodyConfig.users)
     } else {
       console.log('webChat')
+      console.log('user info webChat : ', info)
+      // console.log(requestData)
       let messageMSG = ''
       let typeMSG = ''
       if (requestData?.type === 'text') {
         typeMSG = "TEXT"
-        messageMSG = requestData?.payload
+        messageMSG = info.metadata.inSession === 'comment' ? "ทำการให้ความคิดเห็นประเมิน survey&score" : requestData?.payload
       }else if(requestData?.type === 'image'){
         typeMSG = 'IMG'
         messageMSG = img_url
@@ -200,19 +201,16 @@ module.exports.inboxMessage = async (event) => {
         typeMSG = 'VIDEO'
         messageMSG = img_url
       }else if (requestData?.type === 'postback') {
+        
         typeMSG = 'TEXT'
-        messageMSG = isCheckMessage.postback.data
+        messageMSG = requestData.payload.includes("survey&score") ? "ทำการประเมิน survey&score" : requestData.payload
       }else if(requestData?.type === 'file'){
         typeMSG = 'FILE'
         messageMSG = img_url
       }
-
+    
       
       bodyConfig = {
-        // "contents": [ {
-        //   "type": requestData?.type === 'text' ? "TEXT" : requestData?.type === 'image' ? "IMG" : requestData?.type === 'video' ? "VIDEO" : requestData?.type === 'postback' ? "TEXT" : "STICKER",
-        //   "message": requestData?.type === 'text' ? requestData?.payload : requestData?.type === 'image' ? img_url : requestData?.payload
-        // } ],
         "contents": [ {
           "type": typeMSG,
           "message": messageMSG
@@ -232,7 +230,7 @@ module.exports.inboxMessage = async (event) => {
       }
     }
 
-    console.log('content webchat : ', bodyConfig.contents)
+    console.log('content webchat : ', bodyConfig.contents[0])
     try {
       const token_sf = await getSFToken()
       await sendHistory(token_sf, bodyConfig)
@@ -373,6 +371,7 @@ async function sendHistory(token_sf, bodyConfig) {
     data: bodyConfig
   }
   console.log('config >> ', config)
+  console.log('.data.contents' , config.data.contents[0])
   try {
     const send = await axios.request(config);
     console.log("send: ", send.data)

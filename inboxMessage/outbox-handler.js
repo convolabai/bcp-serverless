@@ -14,11 +14,8 @@ const sfUserName = process.env.sfUserName
 const sfPassword = process.env.sfPassword
 
 module.exports.outboxMessage = async (event) => {
-  console.log(JSON.stringify(event, null, 2))
-
   const rawData = event.body;
   const jsonRawData = JSON.parse(rawData);
-  console.log('jsonRawData : ', jsonRawData)
   const rawBody = jsonRawData.message.data;
   const decodedData = Buffer.from(rawBody, 'base64').toString('utf-8');
   const requestData = JSON.parse(decodedData);
@@ -41,11 +38,21 @@ module.exports.outboxMessage = async (event) => {
           type: 'TEXT',
           message: item.template.text
         };
+      }else if (item.type === 'flex') {
+        return {
+          type: 'TEXT',
+          message: requestData.payload[0].altText === "survey" ? "แบบสอบถามความพึงพอใจ" : "flex card"+requestData.payload[0].altText
+        };
+      }else if (item.type === 'imagemap') {
+        return {
+          type: 'TEXT',
+          message: item.altText
+        };
       }
     })
   };
 
-  console.log('transformedData : ', transformedData)
+  console.log('transformedData : ', transformedData.contents[0])
 
   const currentDate = new Date();
   const timestampInSeconds = Math.floor(currentDate.getTime() / 1000);
@@ -94,7 +101,9 @@ module.exports.outboxMessage = async (event) => {
       }
     }
     try {
+      console.log('bodyConfig : ' , bodyConfig.contents[0])
       const token_sf = await getSFToken()
+      console.log(token_sf)
       await sendHistory(token_sf, bodyConfig)
     } catch (error) {
       console.log("Error status: ", error)
@@ -156,6 +165,7 @@ async function userInfo(userId) {
 }
 
 async function getSFToken() {
+console.log('getSFToken')
   let config = {
     method: 'POST',
     url: `${sfDomain}/services/oauth2/token?grant_type=password&client_id=${sfClientId}&client_secret=${sfClientSecret}&username=${sfUserName}&password=${sfPassword}`,
@@ -163,8 +173,11 @@ async function getSFToken() {
   }
 
   try {
+    console.log(config)
     let res = await axios.request(config);
+    console.log(res)
     let tokenSF = `${res.data.token_type} ${res.data.access_token}`
+
     return tokenSF
   } catch (error) {
     console.log("Error status: ", error.data)
@@ -172,8 +185,6 @@ async function getSFToken() {
 }
 
 async function sendHistory(token_sf, bodyConfig) {
-
-
   let config = {
     method: 'post',
     url: `${sfDomain}/services/apexrest/api/ChatMessagingService/message/send`,
@@ -189,6 +200,6 @@ async function sendHistory(token_sf, bodyConfig) {
     const send = await axios.request(config);
     console.log("send: ", send.data)
   } catch (error) {
-    console.log("Error status: ", error)
+    console.log("Error status: ", error.data)
   }
 }
