@@ -26,6 +26,8 @@ provider:
     s3Bucket : ${env.s3Bucket}
     aws_key: ${env.aws_key}
     aws_secret: ${env.aws_secret}
+    lineChannel: ${env.lineChannel}
+    webChatChannel: ${env.webChatChannel}
     
 functions:
   inboxMessage:

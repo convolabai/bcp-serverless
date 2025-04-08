@@ -48,7 +48,13 @@ module.exports.outboxMessage = async (event) => {
           type: 'TEXT',
           message: item.altText
         };
+      }else if(item.type === 'buttons') {
+        return {
+          type: 'TEXT',
+          message: item.text
+        };
       }
+      
     })
   };
 

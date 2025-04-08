@@ -18,7 +18,8 @@ const line_domain = process.env.line_domain
 const s3Bucket = process.env.s3Bucket
 const aws_key = process.env.aws_key
 const aws_secret = process.env.aws_secret
-
+const webChatChannel = process.env.webChatChannel
+const lineChannel = process.env.lineChannel
 
 let fileType;
 
@@ -38,7 +39,6 @@ module.exports.inboxMessage = async (event) => {
   console.log("inbox event: ", JSON.stringify(requestData));
 
   let isCheckMessage = requestData?.message ? requestData.message : requestData?.type ? requestData : false;
-  // console.log('isCheckMessage : ', isCheckMessage)
   if (requestData?.type === "follow" || requestData?.payload === "") {
     let credential = await access_credential()
     console.log('credential : ', credential)
@@ -134,24 +134,41 @@ module.exports.inboxMessage = async (event) => {
       }
     }
 
-    let userId = jsonRawData.message?.attributes?.channelId === "2004036487" ? requestData?.source?.userId : requestData?.userId
+    let userId = jsonRawData.message?.attributes?.channelId === lineChannel ? requestData?.source?.userId : requestData?.userId
     const currentDate = new Date();
     const timestampInSeconds = Math.floor(currentDate.getTime() / 1000);
     const isoString = currentDate.toISOString();
     const info = await userInfo(userId)
     let bodyConfig = {}
-    if (jsonRawData.message?.attributes?.channelId === "2004036487") {
+    if (jsonRawData.message?.attributes?.channelId === lineChannel) {
       console.log( "line")
       // console.log('isCheckMessage : ', isCheckMessage)
       console.log('user info line : ', info)
       let messageToSF = ''
       let typeSF = ''
       if (isCheckMessage.type === 'text') {
-        typeSF = 'TEXT'
-        messageToSF =  info.metadata.inSession === 'comment' ? "ทำการให้ความคิดเห็นประเมิน survey&score" : isCheckMessage.text
+        console.log(info.metadata.inSession)
+        if (info.metadata.inSession === "comment") {
+          console.log(info.metadata.inSession)
+          const time = info.metadata.timestampComment
+          const timestamp = new Date(time);
+          const now = new Date();
+          const differenceInMillis = now - timestamp;
+          const differenceInMinutes = differenceInMillis / (1000);
+          console.log(differenceInMinutes)
+
+          typeSF = "TEXT";
+          messageToSF = differenceInMinutes > 60 ? isCheckMessage.text : "ทำการให้ความคิดเห็นประเมิน survey&score";
+        } else {
+          typeSF = "TEXT";
+          messageToSF = isCheckMessage.text;
+        }
+
+        // typeSF = 'TEXT'
+        // messageToSF =  info.metadata.inSession === 'comment' ? "ทำการให้ความคิดเห็นประเมิน survey&score" : isCheckMessage.text
       } else if (isCheckMessage.type === 'postback') {
         typeSF = 'TEXT'
-        messageToSF = isCheckMessage.postback.data.includes("survey&score") ? "ทำการประเมิน survey&score" : requestData.payload
+        messageToSF = isCheckMessage.postback.data.includes("survey&score") ? "ทำการประเมิน survey&score" : isCheckMessage.postback.data
       } else if (isCheckMessage.type === 'image') {
         typeSF = 'IMG'
         messageToSF = img_url
@@ -192,8 +209,26 @@ module.exports.inboxMessage = async (event) => {
       let messageMSG = ''
       let typeMSG = ''
       if (requestData?.type === 'text') {
-        typeMSG = "TEXT"
-        messageMSG = info.metadata.inSession === 'comment' ? "ทำการให้ความคิดเห็นประเมิน survey&score" : requestData?.payload
+        console.log(info.metadata.inSession)
+        if (info.metadata.inSession === "comment") {
+          
+          console.log(info.metadata.inSession)
+          const time = info.metadata.timestampComment
+          const timestamp = new Date(time);
+          const now = new Date();
+          const differenceInMillis = now - timestamp;
+          const differenceInMinutes = differenceInMillis / (1000);
+          console.log(differenceInMinutes)
+
+          typeMSG = "TEXT";
+          messageMSG = differenceInMinutes > 60 ? requestData?.payload : "ทำการให้ความคิดเห็นประเมิน survey&score";
+        } else {
+          typeMSG = "TEXT";
+          messageMSG = requestData?.payload;
+        }
+
+        // typeMSG = "TEXT"
+        // messageMSG = info.metadata.inSession === 'comment' ? "ทำการให้ความคิดเห็นประเมิน survey&score" : requestData?.payload
       }else if(requestData?.type === 'image'){
         typeMSG = 'IMG'
         messageMSG = img_url
@@ -358,8 +393,6 @@ async function getSFToken() {
 }
 
 async function sendHistory(token_sf, bodyConfig) {
-
-
   let config = {
     method: 'post',
     url: `${sfDomain}/services/apexrest/api/ChatMessagingService/message/send`,
@@ -395,7 +428,6 @@ const uploadToS3 = async (fileBody, fileName, contentType) => {
     const s3 = new AWS.S3();
     const s3result = await s3.upload(s3Option).promise();
     return {
-      // file_url: encodeURI(`https://${s3Option.Bucket}/${s3key}`),
       file_url: encodeURI(`https://${s3Option.Bucket}.s3.ap-southeast-1.amazonaws.com/${s3key}`),
       file_name: fileName,
     };
